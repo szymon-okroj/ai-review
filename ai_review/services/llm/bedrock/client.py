@@ -11,8 +11,8 @@ class BedrockLLMClient(LLMClientProtocol):
     async def chat(self, prompt: str, prompt_system: str) -> ChatResultSchema:
         meta = settings.llm.meta
         request = BedrockChatRequestSchema(
+            system=prompt_system,
             messages=[
-                BedrockMessageSchema(role="system", content=prompt_system),
                 BedrockMessageSchema(role="user", content=prompt),
             ],
             max_tokens=meta.max_tokens,

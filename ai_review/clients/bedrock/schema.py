@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class BedrockMessageSchema(BaseModel):
-    role: Literal["system", "user", "assistant"]
+    role: Literal["user", "assistant"]
     content: str
 
 
