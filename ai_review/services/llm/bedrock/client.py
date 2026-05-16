@@ -1,7 +1,10 @@
 from ai_review.clients.bedrock.client import get_bedrock_http_client
 from ai_review.clients.bedrock.schema import BedrockMessageSchema, BedrockChatRequestSchema
 from ai_review.config import settings
+from ai_review.libs.logger import get_logger
 from ai_review.services.llm.types import LLMClientProtocol, ChatResultSchema
+
+logger = get_logger("BEDROCK_LLM_CLIENT")
 
 
 class BedrockLLMClient(LLMClientProtocol):
@@ -17,6 +20,11 @@ class BedrockLLMClient(LLMClientProtocol):
             ],
             max_tokens=meta.max_tokens,
             temperature=meta.temperature,
+        )
+        logger.debug(
+            f"Bedrock request structure: "
+            f"system_chars={len(request.system or '')}, "
+            f"message_roles={[m.role for m in request.messages]}"
         )
         response = await self.http_client.chat(request)
         return ChatResultSchema(
