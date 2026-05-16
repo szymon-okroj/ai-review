@@ -1,5 +1,5 @@
 from ai_review.clients.bedrock.client import get_bedrock_http_client
-from ai_review.clients.bedrock.schema import BedrockMessageSchema, BedrockChatRequestSchema
+from ai_review.clients.bedrock.schema import BedrockContentSchema, BedrockMessageSchema, BedrockChatRequestSchema
 from ai_review.config import settings
 from ai_review.libs.logger import get_logger
 from ai_review.services.llm.types import LLMClientProtocol, ChatResultSchema
@@ -16,7 +16,7 @@ class BedrockLLMClient(LLMClientProtocol):
         request = BedrockChatRequestSchema(
             system=prompt_system,
             messages=[
-                BedrockMessageSchema(role="user", content=prompt),
+                BedrockMessageSchema(role="user", content=[BedrockContentSchema(text=prompt)]),
             ],
             max_tokens=meta.max_tokens,
             temperature=meta.temperature,
