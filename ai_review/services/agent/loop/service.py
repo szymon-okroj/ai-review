@@ -149,8 +149,9 @@ class AgentLoopService(AgentLoopServiceProtocol):
             )
             logger.debug(f"Agent LLM response at iteration {iteration}: {result.text[:500]}")
 
-            step: AgentStepSchema | None = self.parser.parse_output(result.text)
-            if step is None:
+            steps: list[AgentStepSchema] = self.parser.parse_all_output(result.text)
+
+            if not steps:
                 fallback_text = result.text or ""
                 logger.info(f"Agent loop iteration {iteration} returned unstructured response; stopping")
                 self.traces.append(
@@ -174,11 +175,13 @@ class AgentLoopService(AgentLoopServiceProtocol):
                     stop_reason="unstructured_response",
                 )
 
-            if step.action.is_final:
+            # FINAL takes priority — if any step is FINAL, stop the loop
+            final_step = next((s for s in steps if s.action.is_final), None)
+            if final_step:
                 logger.info(f"Agent loop iteration {iteration} returned FINAL action")
                 self.traces.append(
                     AgentTraceSchema(
-                        step=step,
+                        step=final_step,
                         iteration=iteration,
                         raw_output=result.text,
                         total_tokens=result.total_tokens,
@@ -189,20 +192,33 @@ class AgentLoopService(AgentLoopServiceProtocol):
 
                 return AgentLoopResultSchema(
                     traces=self.traces,
-                    final_text=step.content,
+                    final_text=final_step.content,
                     stop_reason="final",
                 )
 
-            trace = await self.run_step(step=step, chat=result, iteration=iteration)
-            self.traces.append(trace)
+            # Run all TOOL_CALLs from this response. Tokens are attributed to
+            # the first trace only to avoid double-counting in cost aggregation.
+            tool_steps = [s for s in steps if not s.action.is_final]
+            logger.info(f"Agent loop iteration {iteration} executing {len(tool_steps)} tool call(s)")
+            context_limit_reached = False
+            for step_index, step in enumerate(tool_steps):
+                step_chat = result if step_index == 0 else result.model_copy(
+                    update={"total_tokens": None, "prompt_tokens": None, "completion_tokens": None}
+                )
+                trace = await self.run_step(step=step, chat=step_chat, iteration=iteration)
+                self.traces.append(trace)
 
-            self.context_used += len(trace.tool_output or "")
-            logger.debug(
-                f"Agent loop context usage after iteration {iteration}: "
-                f"{self.context_used}/{self.max_context_chars}"
-            )
-            if self.context_used >= self.max_context_chars:
-                logger.info("Agent context limit reached, forcing final response")
+                self.context_used += len(trace.tool_output or "")
+                logger.debug(
+                    f"Agent loop context usage after iteration {iteration} step {step_index + 1}: "
+                    f"{self.context_used}/{self.max_context_chars}"
+                )
+                if self.context_used >= self.max_context_chars:
+                    logger.info("Agent context limit reached, forcing final response")
+                    context_limit_reached = True
+                    break
+
+            if context_limit_reached:
                 break
 
         logger.info("Agent loop finished regular iterations without FINAL action; switching to force-final flow")

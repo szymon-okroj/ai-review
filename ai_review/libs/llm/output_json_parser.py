@@ -1,3 +1,4 @@
+import json
 import re
 from typing import TypeVar, Generic, Type
 
@@ -40,6 +41,41 @@ class LLMOutputJSONParser(Generic[T]):
                 logger.debug(f"[{self.model_name}] Sanitized JSON identical — skipping retry")
                 return None
 
+    def parse_all_output(self, output: str) -> list[T]:
+        """Extract and parse every JSON object present in the output.
+
+        Handles models that emit multiple JSON objects in a single response
+        despite being instructed to return only one.
+        """
+        output = (output or "").strip()
+        if not output:
+            return []
+
+        if match := CLEAN_JSON_BLOCK_RE.search(output):
+            output = match.group(1).strip()
+
+        results: list[T] = []
+        remaining = output.lstrip()
+        decoder = json.JSONDecoder()
+
+        while remaining:
+            try:
+                obj, idx = decoder.raw_decode(remaining)
+            except json.JSONDecodeError:
+                break
+
+            try:
+                results.append(self.model.model_validate_json(json.dumps(obj)))
+            except ValidationError as error:
+                logger.warning(f"[{self.model_name}] Skipping invalid object during multi-parse: {error}")
+
+            remaining = remaining[idx:].lstrip()
+
+        if results:
+            logger.debug(f"[{self.model_name}] Parsed {len(results)} object(s) from output")
+
+        return results
+
     def parse_output(self, output: str) -> T | None:
         output = (output or "").strip()
         if not output:
@@ -55,6 +91,11 @@ class LLMOutputJSONParser(Generic[T]):
         if parsed := self.try_parse(output):
             logger.info(f"[{self.model_name}] Successfully parsed")
             return parsed
+
+        # Fallback: take just the first object (handles trailing multi-object responses)
+        if results := self.parse_all_output(output):
+            logger.info(f"[{self.model_name}] Successfully parsed first JSON object from multi-object response")
+            return results[0]
 
         logger.error(f"[{self.model_name}] No valid JSON found in output")
         return None
