@@ -72,6 +72,9 @@ prompt:
 
 ## 📝 Notes
 
+- User prompts (`default_inline.md`, `default_context.md`, etc.) are **always included** unless disabled with
+  `include_*_prompts: false`. Extra files from `*_prompt_files` (YAML or `PROMPT__*_PROMPT_FILES` env) are appended
+  after the built-in default. PR diffs are added in the `<diff>` section of the XML user request.
 - System prompts (`default_system_inline.md`, `default_system_context.md`, `default_system_summary.md`) are
   **always included** unless disabled with `include_*_system_prompts: false`.
 - System prompts enforce consistent output format (JSON / text).
@@ -81,6 +84,35 @@ prompt:
   strategy. Override via `agent_prompt_files` / `system_agent_prompt_files` in your config.
 - You can mix **languages or styles** (e.g. `inline_go_strict.md` with `summary_python_light.md`).
 - Add your own organization-specific prompts (e.g., `./prompts/js/inline/corporate.md`).
+
+---
+
+## 📦 User request XML layout
+
+Review user prompts are assembled as a single XML document:
+
+```xml
+<ai_review_request>
+  <instructions><![CDATA[
+    Built-in review instructions (default_*.md)
+  ]]></instructions>
+  <context><![CDATA[
+    Extra prompt files from PROMPT__*_PROMPT_FILES (e.g. import snippets)
+  ]]></context>
+  <review_metadata>
+    <review_title>...</review_title>
+    <changed_files>...</changed_files>
+  </review_metadata>
+  <diff>
+    <file path="src/foo.py"><![CDATA[
+      ...git diff...
+    ]]></file>
+  </diff>
+</ai_review_request>
+```
+
+Reply reviews add `<conversation>` with `<comment author="...">` entries. Agent mode uses
+`<ai_review_agent_request>` with `<task>`, `<task_output_format>`, and `<agent_history>`.
 
 ---
 

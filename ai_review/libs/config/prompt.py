@@ -6,14 +6,29 @@ from pydantic import BaseModel, FilePath, Field
 from ai_review.libs.resources import load_resource
 
 
-def resolve_prompt_files(files: list[FilePath] | None, default_file: str) -> list[Path]:
-    return files or [
-        load_resource(
-            package="ai_review.prompts",
-            filename=default_file,
-            fallback=f"ai_review/prompts/{default_file}"
-        )
-    ]
+def _load_default_prompt(default_file: str) -> Path:
+    return load_resource(
+        package="ai_review.prompts",
+        filename=default_file,
+        fallback=f"ai_review/prompts/{default_file}",
+    )
+
+
+def resolve_prompt_files(
+        files: list[FilePath] | None,
+        default_file: str,
+        *,
+        include: bool = True,
+) -> list[Path]:
+    default = _load_default_prompt(default_file)
+
+    if files is None:
+        return [default]
+
+    if include:
+        return [default, *files]
+
+    return list(files)
 
 
 def resolve_system_prompt_files(files: list[FilePath] | None, include: bool, default_file: str) -> list[Path]:
@@ -55,6 +70,14 @@ class PromptConfig(BaseModel):
     system_inline_reply_prompt_files: list[FilePath] | None = None
     system_summary_reply_prompt_files: list[FilePath] | None = None
 
+    # --- Include Prompts ---
+    include_agent_prompts: bool = True
+    include_inline_prompts: bool = True
+    include_context_prompts: bool = True
+    include_summary_prompts: bool = True
+    include_inline_reply_prompts: bool = True
+    include_summary_reply_prompts: bool = True
+
     # --- Include System Prompts ---
     include_agent_system_prompts: bool = True
     include_inline_system_prompts: bool = True
@@ -66,27 +89,51 @@ class PromptConfig(BaseModel):
     # --- Prompts ---
     @cached_property
     def agent_prompt_files_or_default(self) -> list[Path]:
-        return resolve_prompt_files(self.agent_prompt_files, "default_agent.md")
+        return resolve_prompt_files(
+            self.agent_prompt_files,
+            "default_agent.md",
+            include=self.include_agent_prompts,
+        )
 
     @cached_property
     def inline_prompt_files_or_default(self) -> list[Path]:
-        return resolve_prompt_files(self.inline_prompt_files, "default_inline.md")
+        return resolve_prompt_files(
+            self.inline_prompt_files,
+            "default_inline.md",
+            include=self.include_inline_prompts,
+        )
 
     @cached_property
     def context_prompt_files_or_default(self) -> list[Path]:
-        return resolve_prompt_files(self.context_prompt_files, "default_context.md")
+        return resolve_prompt_files(
+            self.context_prompt_files,
+            "default_context.md",
+            include=self.include_context_prompts,
+        )
 
     @cached_property
     def summary_prompt_files_or_default(self) -> list[Path]:
-        return resolve_prompt_files(self.summary_prompt_files, "default_summary.md")
+        return resolve_prompt_files(
+            self.summary_prompt_files,
+            "default_summary.md",
+            include=self.include_summary_prompts,
+        )
 
     @cached_property
     def inline_reply_prompt_files_or_default(self) -> list[Path]:
-        return resolve_prompt_files(self.inline_reply_prompt_files, "default_inline_reply.md")
+        return resolve_prompt_files(
+            self.inline_reply_prompt_files,
+            "default_inline_reply.md",
+            include=self.include_inline_reply_prompts,
+        )
 
     @cached_property
     def summary_reply_prompt_files_or_default(self) -> list[Path]:
-        return resolve_prompt_files(self.summary_reply_prompt_files, "default_summary_reply.md")
+        return resolve_prompt_files(
+            self.summary_reply_prompt_files,
+            "default_summary_reply.md",
+            include=self.include_summary_reply_prompts,
+        )
 
     # --- System Prompts ---
     @cached_property

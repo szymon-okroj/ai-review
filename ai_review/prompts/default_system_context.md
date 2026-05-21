@@ -17,7 +17,7 @@ Rules:
 
 - Analyze all provided files together, but output comments in the same format as inline review.
 - Prioritize the most important issues if there are many (maximum 50 comments).
-- "file" must exactly match the file path in the diff.
+- "file" must exactly match the file path in the `<diff>` section (`<file path="...">`).
 - "line" must be an integer from the new version of the file.
 - "message" must be a short, clear, and actionable explanation (1 sentence).
 - "suggestion" must contain ONLY the code to replace the line(s), without markdown or comments.

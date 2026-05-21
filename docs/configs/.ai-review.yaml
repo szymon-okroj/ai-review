@@ -309,15 +309,19 @@ prompt:
   # ==============================
   # Agent prompts
   # ==============================
-  # agent_prompt_files (joined in order).
+  # agent_prompt_files (joined in order, appended after built-in default_agent.md).
   # These provide local instructions for agent behavior:
   # how to explore context, when to stop, and how to structure final reasoning.
   #
-  # Defaults (if not defined):
-  #   - default_agent.md
+  # Built-in default is always used unless include_agent_prompts: false.
   #
-  agent_prompt_files:
-    - ./prompts/default_agent.md  # Agent behavior prompt
+  # agent_prompt_files:
+  #   - ./prompts/extra_agent_context.md
+
+  # Whether to include built-in default user agent prompts.
+  # true  (default) → prepend default_agent.md, then agent_prompt_files
+  # false → only user-provided agent_prompt_files are used
+  include_agent_prompts: true
 
   # system_agent_prompt_files (joined in order).
   # These define the strict system contract for agent mode:
@@ -339,15 +343,19 @@ prompt:
   # ==============================
   # Inline prompts
   # ==============================
-  # inline_prompt_files (joined in order).
+  # inline_prompt_files (joined in order, appended after built-in default_inline.md).
   # These provide *local instructions* for inline review,
   # e.g. what to check in code (readability, bugs, style, etc.).
   #
-  # Defaults (if not defined):
-  #   - default_inline.md
+  # Built-in default is always used unless include_inline_prompts: false.
   #
-  inline_prompt_files:
-    - ./prompts/default_inline.md  # MR-specific inline prompt
+  # inline_prompt_files:
+  #   - ./.ai-review-related-snippet.md
+
+  # Whether to include built-in default user inline prompts.
+  # true  (default) → prepend default_inline.md, then inline_prompt_files
+  # false → only user-provided inline_prompt_files are used
+  include_inline_prompts: true
 
   # system_inline_prompt_files (joined in order).
   # These define the *contract* with the model for inline review:
@@ -369,16 +377,13 @@ prompt:
   # ==============================
   # Context prompts
   # ==============================
-  # context_prompt_files (joined in order).
-  # These provide *local instructions* for context review,
-  # e.g. broader analysis across multiple files, naming consistency,
-  # architectural issues, or duplicated code.
+  # context_prompt_files (joined in order, appended after built-in default_context.md).
+  # Built-in default is always used unless include_context_prompts: false.
   #
-  # Defaults (if not defined):
-  #   - default_context.md
-  #
-  context_prompt_files:
-    - ./prompts/default_context.md  # MR-specific context prompt
+  # context_prompt_files:
+  #   - ./.ai-review-related-snippet.md
+
+  include_context_prompts: true
 
   # system_context_prompt_files (joined in order).
   # These define the *contract* with the model for context review:
@@ -400,15 +405,9 @@ prompt:
   # ==============================
   # Summary prompts
   # ==============================
-  # summary_prompt_files (joined in order).
-  # These provide *local instructions* for summary review,
-  # e.g. how to write the MR overview, highlight issues and strengths.
-  #
-  # Defaults (if not defined):
-  #   - default_summary.md
-  #
-  summary_prompt_files:
-    - ./prompts/default_summary.md  # MR-specific summary prompt
+  # summary_prompt_files (joined in order, appended after built-in default_summary.md).
+  # Built-in default is always used unless include_summary_prompts: false.
+  include_summary_prompts: true
 
   # system_summary_prompt_files (joined in order).
   # These define the *contract* with the model for summary review:
@@ -430,17 +429,9 @@ prompt:
   # ==============================
   # Inline reply prompts
   # ==============================
-  # inline_reply_prompt_files (joined in order).
-  # These provide *local instructions* for AI reply generation
-  # inside existing inline comment threads.
-  #
-  # Useful when the AI should continue discussions or explain prior feedback.
-  #
-  # Defaults (if not defined):
-  #   - default_inline_reply.md
-  #
-  inline_reply_prompt_files:
-    - ./prompts/default_inline_reply.md  # MR-specific inline reply prompt
+  # inline_reply_prompt_files (joined in order, appended after built-in default_inline_reply.md).
+  # Built-in default is always used unless include_inline_reply_prompts: false.
+  include_inline_reply_prompts: true
 
   # system_inline_reply_prompt_files (joined in order).
   # These define the *contract* with the model for inline reply generation:
@@ -462,17 +453,9 @@ prompt:
   # ==============================
   # Summary reply prompts
   # ==============================
-  # summary_reply_prompt_files (joined in order).
-  # These provide *local instructions* for generating AI replies
-  # to summary review comments (e.g. reviewer discussion threads).
-  #
-  # Useful for collaborative or follow-up review workflows.
-  #
-  # Defaults (if not defined):
-  #   - default_summary_reply.md
-  #
-  summary_reply_prompt_files:
-    - ./prompts/default_summary_reply.md  # MR-specific summary reply prompt
+  # summary_reply_prompt_files (joined in order, appended after built-in default_summary_reply.md).
+  # Built-in default is always used unless include_summary_reply_prompts: false.
+  include_summary_reply_prompts: true
 
   # system_summary_reply_prompt_files (joined in order).
   # These define the *contract* with the model for summary reply generation:

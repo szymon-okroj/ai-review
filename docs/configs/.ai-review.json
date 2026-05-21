@@ -58,24 +58,12 @@
     },
     "normalize_prompts": true,
     "context_placeholder": "<<{value}>>",
-    "agent_prompt_files": [
-      "./prompts/default_agent.md"
-    ],
-    "inline_prompt_files": [
-      "./prompts/default_inline.md"
-    ],
-    "context_prompt_files": [
-      "./prompts/default_context.md"
-    ],
-    "summary_prompt_files": [
-      "./prompts/default_summary.md"
-    ],
-    "inline_reply_prompt_files": [
-      "./prompts/default_inline_reply.md"
-    ],
-    "summary_reply_prompt_files": [
-      "./prompts/default_summary_reply.md"
-    ],
+    "include_agent_prompts": true,
+    "include_inline_prompts": true,
+    "include_context_prompts": true,
+    "include_summary_prompts": true,
+    "include_inline_reply_prompts": true,
+    "include_summary_reply_prompts": true,
     "system_agent_prompt_files": [
       "./prompts/default_system_agent.md"
     ],

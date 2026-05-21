@@ -14,9 +14,13 @@ def test_build_inline_request_includes_prompts_and_diff(fake_prompt_context: Pro
     diff = DiffFileSchema(file="foo.py", diff="+ added line\n- removed line")
     result = PromptService.build_inline_request(diff, fake_prompt_context)
 
+    assert "<ai_review_request>" in result
+    assert "<instructions>" in result
     assert "GLOBAL_INLINE" in result
+    assert "<context>" in result
     assert "INLINE_PROMPT" in result
-    assert "# File: foo.py" in result
+    assert "<diff>" in result
+    assert 'path="foo.py"' in result
     assert "+ added line" in result
     assert "- removed line" in result
 
@@ -29,23 +33,23 @@ def test_build_summary_request_includes_prompts_and_diffs(fake_prompt_context: P
     ]
     result = PromptService.build_summary_request(diffs, fake_prompt_context)
 
+    assert "<ai_review_request>" in result
     assert "GLOBAL_SUMMARY" in result
     assert "SUMMARY_PROMPT" in result
-    assert "# File: a.py" in result
-    assert "# File: b.py" in result
+    assert 'path="a.py"' in result
+    assert 'path="b.py"' in result
     assert "+ foo" in result
     assert "- bar" in result
 
 
 @pytest.mark.usefixtures("fake_prompts")
 def test_build_summary_request_empty_list(fake_prompt_context: PromptContextSchema) -> None:
-    """Empty diffs list should still produce valid prompt with no diff content."""
+    """Empty diffs list should still produce valid prompt with empty diff section."""
     result = PromptService.build_summary_request([], fake_prompt_context)
 
     assert "GLOBAL_SUMMARY" in result
     assert "SUMMARY_PROMPT" in result
-    assert "## Changes" in result
-    assert result.strip().endswith("## Changes")
+    assert "<diff></diff>" in result
 
 
 @pytest.mark.usefixtures("fake_prompts")
@@ -58,8 +62,8 @@ def test_build_context_request_includes_prompts_and_diffs(fake_prompt_context: P
 
     assert "GLOBAL_CONTEXT" in result
     assert "CONTEXT_PROMPT" in result
-    assert "# File: a.py" in result
-    assert "# File: b.py" in result
+    assert 'path="a.py"' in result
+    assert 'path="b.py"' in result
     assert "+ foo" in result
     assert "- bar" in result
 
@@ -175,11 +179,11 @@ def test_build_inline_reply_request_includes_conversation_and_diff(fake_prompt_c
 
     assert "INLINE_REPLY_A" in result
     assert "INLINE_REPLY_B" in result
-    assert "## Conversation" in result
+    assert "<conversation>" in result
     assert "Initial comment" in result
     assert "Follow-up" in result
-    assert "## Diff" in result
-    assert "# File: foo.py" in result
+    assert "<diff>" in result
+    assert 'path="foo.py"' in result
     assert "+ added" in result
 
 
@@ -198,9 +202,9 @@ def test_build_summary_reply_request_includes_conversation_and_changes(
 
     assert "SUMMARY_REPLY_A" in result
     assert "SUMMARY_REPLY_B" in result
-    assert "## Conversation" in result
+    assert "<conversation>" in result
     assert "Overall feedback" in result
-    assert "## Changes" in result
+    assert "<diff>" in result
     assert "+ foo" in result
 
 
@@ -235,15 +239,16 @@ def test_build_agent_request_contains_history() -> None:
         original_prompt="ORIGINAL_PROMPT",
         original_prompt_system="ORIGINAL_SYSTEM",
     )
+    assert "<ai_review_agent_request>" in result
     assert "GLOBAL_AGENT" in result
     assert "AGENT_PROMPT" in result
-    assert "## Agent mode" in result
-    assert "## Task output format" in result
+    assert "<agent_mode>" in result
+    assert "<task_output_format>" in result
     assert "ORIGINAL_SYSTEM" in result
-    assert "## Task" in result
+    assert "<task>" in result
     assert "ORIGINAL_PROMPT" in result
-    assert "## Agent history" in result
-    assert "Command: rg foo src" in result
+    assert "<agent_history>" in result
+    assert "<command>rg foo src</command>" in result
 
 
 @pytest.mark.usefixtures("fake_prompts")
@@ -261,6 +266,6 @@ def test_build_agent_request_force_final_mode() -> None:
         original_prompt="TASK",
         original_prompt_system="FORMAT",
     )
-    assert "## Agent mode" in result
+    assert "<agent_mode>" in result
     assert "Return FINAL only." in result
-    assert "No previous steps." in result
+    assert "<agent_history></agent_history>" in result

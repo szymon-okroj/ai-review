@@ -18,6 +18,12 @@ vcs:
     api_url: https://api.github.com
 
 prompt:
+  include_agent_prompts: false
+  include_inline_prompts: false
+  include_context_prompts: false
+  include_summary_prompts: false
+  include_inline_reply_prompts: false
+  include_summary_reply_prompts: false
   inline_prompt_files: [ ./docs/prompts/python/inline/strict.md ]
   context_prompt_files: [ ./docs/prompts/python/inline/strict.md ]
   summary_prompt_files: [ ./docs/prompts/python/summary/strict.md ]

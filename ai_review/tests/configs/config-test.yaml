@@ -21,6 +21,8 @@ vcs:
     api_token: "token"
 
 prompt:
+  include_inline_prompts: false
+  include_summary_prompts: false
   inline_prompt_files:
     - ./ai_review/prompts/default_inline.md
   summary_prompt_files:

@@ -7,10 +7,23 @@ from ai_review.libs.config.prompt import PromptConfig, resolve_prompt_files, res
 
 # ---------- resolve_prompt_files ----------
 
-def test_resolve_prompt_files_returns_given_list(tmp_path: Path):
-    dummy_file = tmp_path / "file.md"
-    result = resolve_prompt_files([dummy_file], "default_inline.md")
-    assert result == [dummy_file]
+def test_resolve_prompt_files_include_true_prepends_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    default_file = tmp_path / "default.md"
+    default_file.write_text("DEFAULT")
+    custom_file = tmp_path / "custom.md"
+    monkeypatch.setattr("ai_review.libs.config.prompt._load_default_prompt", lambda _: default_file)
+
+    result = resolve_prompt_files([custom_file], "default_inline.md", include=True)
+    assert result == [default_file, custom_file]
+
+
+def test_resolve_prompt_files_include_false_returns_only_custom(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    default_file = tmp_path / "default.md"
+    custom_file = tmp_path / "custom.md"
+    monkeypatch.setattr("ai_review.libs.config.prompt._load_default_prompt", lambda _: default_file)
+
+    result = resolve_prompt_files([custom_file], "default_inline.md", include=False)
+    assert result == [custom_file]
 
 
 def test_resolve_prompt_files_loads_default_when_none(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -107,11 +120,25 @@ def test_load_agent_prompts_from_default(monkeypatch: pytest.MonkeyPatch, tmp_pa
     assert config.load_agent() == ["AGENT"]
 
 
-def test_load_agent_prompts_from_custom_files(tmp_path: Path):
+def test_load_agent_prompts_from_custom_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    default_file = tmp_path / "default_agent.md"
+    default_file.write_text("DEFAULT_AGENT")
     custom_file = tmp_path / "custom_agent.md"
     custom_file.write_text("CUSTOM_AGENT")
+    monkeypatch.setattr("ai_review.libs.config.prompt._load_default_prompt", lambda _: default_file)
 
     config = PromptConfig(agent_prompt_files=[custom_file])
+    assert config.agent_prompt_files_or_default == [default_file, custom_file]
+    assert config.load_agent() == ["DEFAULT_AGENT", "CUSTOM_AGENT"]
+
+
+def test_load_agent_prompts_custom_only_when_include_false(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    default_file = tmp_path / "default_agent.md"
+    custom_file = tmp_path / "custom_agent.md"
+    custom_file.write_text("CUSTOM_AGENT")
+    monkeypatch.setattr("ai_review.libs.config.prompt._load_default_prompt", lambda _: default_file)
+
+    config = PromptConfig(agent_prompt_files=[custom_file], include_agent_prompts=False)
     assert config.agent_prompt_files_or_default == [custom_file]
     assert config.load_agent() == ["CUSTOM_AGENT"]
 
